@@ -38,31 +38,38 @@ pub fn SvgDisplay(
     view! {
         <div style="display: flex; justify-content: center; align-items: center;">
             <svg node_ref=svg viewBox=viewbox style="width: 50%; height: 50%;" on:mousemove=mousemove>
-                <Curve mousedown=mousedown mousepos=mousepos b=b1 set_b=set_b1 />
-                <Curve mousedown=mousedown mousepos=mousepos b=b2 set_b=set_b2 />
+                <Curve stroke1="cyan" stroke2="#F535AA" b=b1 set_b=set_b1 mousedown=mousedown mousepos=mousepos />
+                <Curve stroke1="red" stroke2="blue" b=b2 set_b=set_b2 mousedown=mousedown mousepos=mousepos />
             </svg>
         </div>
     }
 }
 
 #[component]
-fn Curve(
+fn Curve<'a>(
     mousedown: ReadSignal<bool>,
     mousepos: ReadSignal<Point>,
     b: ReadSignal<CubicBezier>,
-    set_b: WriteSignal<CubicBezier>
+    set_b: WriteSignal<CubicBezier>,
+    stroke1: &'a str,
+    stroke2: &'a str,
 ) -> impl IntoView {
-    let path = move || {
+    let paths = move || {
         let b = b.read();
-        b.to_path()
+        let (l, r) = b.split();
+        (l.to_path(), r.to_path())
     };
 
+    let path1 = move || paths().0;
+    let path2 = move || paths().1;
+
     view! {
-        <path d=path stroke="cyan" stroke-width="2" fill="none" />
-        <ControlPoint i=0 stroke="blue" b=b set_b=set_b mousedown=mousedown mousepos=mousepos />
-        <ControlPoint i=1 stroke="red"  b=b set_b=set_b mousedown=mousedown mousepos=mousepos />
-        <ControlPoint i=2 stroke="red"  b=b set_b=set_b mousedown=mousedown mousepos=mousepos />
-        <ControlPoint i=3 stroke="blue" b=b set_b=set_b mousedown=mousedown mousepos=mousepos />
+        <path d=path1 stroke=stroke1 stroke-width="2" fill="none" />
+        <path d=path2 stroke=stroke2 stroke-width="2" fill="none" />
+        <ControlPoint i=0 stroke="#2C9DBC" b=b set_b=set_b mousedown=mousedown mousepos=mousepos />
+        <ControlPoint i=1 stroke="red"     b=b set_b=set_b mousedown=mousedown mousepos=mousepos />
+        <ControlPoint i=2 stroke="red"     b=b set_b=set_b mousedown=mousedown mousepos=mousepos />
+        <ControlPoint i=3 stroke="#2C9DBC" b=b set_b=set_b mousedown=mousedown mousepos=mousepos />
     }
 }
 
