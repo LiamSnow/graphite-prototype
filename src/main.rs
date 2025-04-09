@@ -1,7 +1,5 @@
 use leptos::{
-    ev::{self, MouseEvent},
-    prelude::*,
-    svg::Svg,
+    ev::{self, MouseEvent}, logging::log, prelude::*, svg::Svg
 };
 
 fn main() {
@@ -37,13 +35,15 @@ fn App() -> impl IntoView {
             <svg node_ref=svg viewBox=viewbox style="width: 50%; height: 50%;" on:mousemove=mousemove>
                 <Curve mousedown=mousedown mousepos=mousepos
                     a1x=250.0 a1y=50.0
+                    c1x=210.0 c1y=100.0
+                    c2x=300.0 c2y=200.0
                     a2x=300.0 a2y=400.0
-                    cx=350.0 cy=410.0
                 />
                 <Curve mousedown=mousedown mousepos=mousepos
                     a1x=50.0 a1y=250.0
+                    c1x=410.0 c1y=200.0
+                    c2x=100.0 c2y=200.0
                     a2x=400.0 a2y=300.0
-                    cx=410.0 cy=200.0
                 />
             </svg>
         </div>
@@ -56,28 +56,41 @@ fn Curve(
     mousepos: ReadSignal<(f64, f64)>,
     a1x: f64,
     a1y: f64,
+    c1x: f64,
+    c1y: f64,
+    c2x: f64,
+    c2y: f64,
     a2x: f64,
     a2y: f64,
-    cx: f64,
-    cy: f64,
 ) -> impl IntoView {
     let (a1, set_a1) = signal((a1x, a1y));
+    let (c1, set_c1) = signal((c1x, c1y));
+    let (c2, set_c2) = signal((c2x, c2y));
     let (a2, set_a2) = signal((a2x, a2y));
-    let (c, set_c) = signal((cx, cy));
+
+    Effect::new(move |_| {
+        log!("a1: {:#?}, c1: {:#?}, c2: {:#?}, a2: {:#?}", a1.get(), c1.get(), c2.get(), a2.get());
+    });
 
     let path = move || {
         let a1 = a1.get();
-        let a2 = a2.get();
-        let c = c.get();
-        format!("M {} {} Q {} {} {} {}", a1.0, a1.1, c.0, c.1, a2.0, a2.1)
+        let c1 = sub_f64_tup(c1.get(), a1);
+        let c2 = sub_f64_tup(c2.get(), a1);
+        let a2 = sub_f64_tup(a2.get(), a1);
+        format!("M {} {} c {} {} {} {} {} {}", a1.0, a1.1, c1.0, c1.1, c2.0, c2.1, a2.0, a2.1)
     };
 
     view! {
         <path d=path stroke="black" stroke-width="2" fill="none" />
         <ControlPoint stroke="blue" pos=a1 set_pos=set_a1 mousedown=mousedown mousepos=mousepos />
         <ControlPoint stroke="blue" pos=a2 set_pos=set_a2 mousedown=mousedown mousepos=mousepos />
-        <ControlPoint stroke="red" pos=c set_pos=set_c mousedown=mousedown mousepos=mousepos />
+        <ControlPoint stroke="red" pos=c1 set_pos=set_c1 mousedown=mousedown mousepos=mousepos />
+        <ControlPoint stroke="red" pos=c2 set_pos=set_c2 mousedown=mousedown mousepos=mousepos />
     }
+}
+
+fn sub_f64_tup(a: (f64, f64), b: (f64, f64)) -> (f64, f64) {
+    (a.0 - b.0, a.1 - b.1)
 }
 
 #[component]
